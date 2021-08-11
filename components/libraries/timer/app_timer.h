@@ -100,6 +100,64 @@ extern "C" {
 
 #define APP_TIMER_MAX_CNT_VAL          RTC_COUNTER_COUNTER_Msk    /**< Maximum counter value that can be returned by @ref app_timer_cnt_get. */
 
+
+
+
+//RTC
+
+/**@brief Initialize the application timer module.
+ *
+ * @details This macro handles dimensioning and allocation of the memory buffer required by the timer,
+ *          making sure that the buffer is correctly aligned. It will also connect the timer module
+ *          to the scheduler (if specified).
+ *
+ * @note    This module assumes that the LFCLK is already running. If it is not, the module will 
+ *          be non-functional, since the RTC will not run. If you do not use a SoftDevice, you 
+ *          must start the LFCLK manually. See the rtc_example's lfclk_config() function 
+ *          for an example of how to do this. If you use a SoftDevice, the LFCLK is started on 
+ *          SoftDevice init. 
+ *
+ *
+ * @param[in]  PRESCALER        Value of the RTC1 PRESCALER register. This will decide the
+ *                              timer tick rate. Set to 0 for no prescaling.
+ * @param[in]  OP_QUEUES_SIZE   Size of queues holding timer operations that are pending execution.
+ * @param[in]  SCHEDULER_FUNC   Pointer to scheduler event handler
+ *
+ * @note Since this macro allocates a buffer, it must only be called once (it is OK to call it
+ *       several times as long as it is from the same location, for example, to do a re-initialization).
+ */
+/*lint -emacro(506, APP_TIMER_INIT) */ /* Suppress "Constant value Boolean */
+
+
+
+/*
+#define APP_TIMER_INIT(PRESCALER, OP_QUEUES_SIZE, SCHEDULER_FUNC)                                  \
+    do                                                                                             \
+    {                                                                                              \
+        static uint32_t APP_TIMER_BUF[CEIL_DIV(APP_TIMER_BUF_SIZE((OP_QUEUES_SIZE) + 1),           \
+                                               sizeof(uint32_t))];                                 \
+        uint32_t ERR_CODE = app_timer_init((PRESCALER),                                            \
+                                           (OP_QUEUES_SIZE) + 1,                                   \
+                                           APP_TIMER_BUF,                                          \
+                                           SCHEDULER_FUNC);                                        \
+        APP_ERROR_CHECK(ERR_CODE);                                                                 \
+    } while (0)
+
+*/
+
+
+
+//RTC
+
+
+
+
+
+
+
+
+
+
 /**@brief Convert milliseconds to timer ticks.
  *
  * This macro uses 64-bit integer arithmetic, but as long as the macro parameters are

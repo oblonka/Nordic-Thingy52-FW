@@ -48,7 +48,9 @@
 
 #define BLE_ADV_MODES (5) /**< Total number of possible advertising modes. */
 
+//rtc
 
+//rtc
 /**@brief Function for checking if the whitelist is in use.
  *
  * @param[in] p_advertising Advertising module instance.
@@ -677,6 +679,181 @@ uint32_t ble_advertising_start(ble_advertising_t * const p_advertising,
 
     return NRF_SUCCESS;
 }
+
+//rtc
+/*
+uint32_t ble_advertising_start_rtc(ble_adv_mode_t advertising_mode)
+{
+    uint32_t             err_code;
+    ble_gap_adv_params_t adv_params;
+
+    m_adv_mode_current = advertising_mode;
+
+    // Verify if there are any pending flash operations. If so, delay starting advertising until
+    // the flash operations are complete.
+    if(flash_access_in_progress())
+    {
+        m_advertising_start_pending = true;
+        return NRF_SUCCESS;
+    }
+
+    ADV_LOG("[ADV]: no flash operations in progress, prepare advertising.\r\n");
+    // Fetch the peer address.
+    ble_advertising_peer_address_clear();
+
+    if (  ((m_adv_modes_config.ble_adv_directed_enabled)      && (m_adv_mode_current == BLE_ADV_MODE_DIRECTED))
+        ||((m_adv_modes_config.ble_adv_directed_slow_enabled) && (m_adv_mode_current == BLE_ADV_MODE_DIRECTED))
+        ||((m_adv_modes_config.ble_adv_directed_slow_enabled) && (m_adv_mode_current == BLE_ADV_MODE_DIRECTED_SLOW))
+       )
+    {
+        if (m_evt_handler != NULL)
+        {
+            m_peer_addr_reply_expected = true;
+            m_evt_handler(BLE_ADV_EVT_PEER_ADDR_REQUEST);
+        }
+        else
+        {
+            m_peer_addr_reply_expected = false;
+        }
+    }
+
+    // If a mode is disabled, continue to the next mode. I.e fast instead of direct, slow instead of fast, idle instead of slow.
+    if (  (m_adv_mode_current == BLE_ADV_MODE_DIRECTED)
+        &&(!m_adv_modes_config.ble_adv_directed_enabled || !peer_address_exists(m_peer_address.addr)))
+    {
+        m_adv_mode_current = BLE_ADV_MODE_DIRECTED_SLOW;
+    }
+    if (  (m_adv_mode_current == BLE_ADV_MODE_DIRECTED_SLOW)
+        &&(!m_adv_modes_config.ble_adv_directed_slow_enabled || !peer_address_exists(m_peer_address.addr)))
+    {
+        m_adv_mode_current = BLE_ADV_MODE_FAST;
+    }
+    if (!m_adv_modes_config.ble_adv_fast_enabled && m_adv_mode_current == BLE_ADV_MODE_FAST)
+    {
+        m_adv_mode_current = BLE_ADV_MODE_SLOW;
+    }
+    if (!m_adv_modes_config.ble_adv_slow_enabled && m_adv_mode_current == BLE_ADV_MODE_SLOW)
+    {
+        m_adv_mode_current = BLE_ADV_MODE_IDLE;
+        m_adv_evt          = BLE_ADV_EVT_IDLE;
+    }
+
+    // Fetch the whitelist.
+    if (   (m_evt_handler != NULL)
+        && (m_adv_mode_current == BLE_ADV_MODE_FAST || m_adv_mode_current == BLE_ADV_MODE_SLOW)
+        && (m_adv_modes_config.ble_adv_whitelist_enabled)
+        && (!m_whitelist_temporarily_disabled))
+    {
+        m_whitelist_reply_expected = true;
+        m_evt_handler(BLE_ADV_EVT_WHITELIST_REQUEST);
+    }
+    else
+    {
+        m_whitelist_reply_expected = false;
+    }
+
+    // Initialize advertising parameters with default values.
+    memset(&adv_params, 0, sizeof(adv_params));
+
+    adv_params.type        = BLE_GAP_ADV_TYPE_ADV_IND;
+    adv_params.p_peer_addr = NULL;
+    adv_params.fp          = BLE_GAP_ADV_FP_ANY;
+    adv_params.p_whitelist = NULL;
+
+    // Set advertising parameters and events according to selected advertising mode.
+    switch (m_adv_mode_current)
+    {
+        case BLE_ADV_MODE_DIRECTED:
+            ADV_LOG("[ADV]: Starting direct advertisement.\r\n");
+            adv_params.p_peer_addr = &m_peer_address; // Directed advertising.
+            adv_params.type        = BLE_GAP_ADV_TYPE_ADV_DIRECT_IND;
+            adv_params.timeout     = 0;
+            adv_params.interval    = 0;
+            m_adv_evt              = BLE_ADV_EVT_DIRECTED;
+            break;
+
+        case BLE_ADV_MODE_DIRECTED_SLOW:
+            ADV_LOG("[ADV]: Starting direct advertisement.\r\n");
+            adv_params.p_peer_addr = &m_peer_address; // Directed advertising.
+            adv_params.type        = BLE_GAP_ADV_TYPE_ADV_DIRECT_IND;
+            adv_params.timeout     = m_adv_modes_config.ble_adv_directed_slow_timeout;
+            adv_params.interval    = m_adv_modes_config.ble_adv_directed_slow_interval;
+            m_adv_evt              = BLE_ADV_EVT_DIRECTED_SLOW;
+            break;
+
+        case BLE_ADV_MODE_FAST:
+            adv_params.timeout  = m_adv_modes_config.ble_adv_fast_timeout;
+            adv_params.interval = m_adv_modes_config.ble_adv_fast_interval;
+
+            if (   whitelist_has_entries(&m_whitelist)
+                && m_adv_modes_config.ble_adv_whitelist_enabled
+                && !m_whitelist_temporarily_disabled)
+            {
+                adv_params.fp          = BLE_GAP_ADV_FP_FILTER_CONNREQ;
+                adv_params.p_whitelist = &m_whitelist;
+                m_advdata.flags        = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
+                err_code               = ble_advdata_set(&m_advdata, NULL);
+                VERIFY_SUCCESS(err_code);
+
+                m_adv_evt = BLE_ADV_EVT_FAST_WHITELIST;
+                ADV_LOG("[ADV]: Starting fast advertisement with whitelist.\r\n");
+            }
+            else
+            {
+                m_adv_evt = BLE_ADV_EVT_FAST;
+                ADV_LOG("[ADV]: Starting fast advertisement.\r\n");
+            }
+            break;
+
+        case BLE_ADV_MODE_SLOW:
+            adv_params.interval = m_adv_modes_config.ble_adv_slow_interval;
+            adv_params.timeout  = m_adv_modes_config.ble_adv_slow_timeout;
+
+            if (   whitelist_has_entries(&m_whitelist)
+                && m_adv_modes_config.ble_adv_whitelist_enabled
+                && !m_whitelist_temporarily_disabled)
+            {
+                adv_params.fp          = BLE_GAP_ADV_FP_FILTER_CONNREQ;
+                adv_params.p_whitelist = &m_whitelist;
+                m_advdata.flags        = BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED;
+                err_code               = ble_advdata_set(&m_advdata, NULL);
+                VERIFY_SUCCESS(err_code);
+
+                m_adv_evt = BLE_ADV_EVT_SLOW_WHITELIST;
+                ADV_LOG("[ADV]: Starting slow advertisement with whitelist.\r\n");
+            }
+            else
+            {
+                m_adv_evt = BLE_ADV_EVT_SLOW;
+                ADV_LOG("[ADV]: Starting slow advertisement.\r\n");
+            }
+            break;
+
+        default:
+            break;
+    }
+    if (m_adv_mode_current != BLE_ADV_MODE_IDLE)
+    {
+        err_code = sd_ble_gap_adv_start(&adv_params);
+        VERIFY_SUCCESS(err_code);
+    }
+    if (m_evt_handler != NULL)
+    {
+        m_evt_handler(m_adv_evt);
+    }
+
+    return NRF_SUCCESS;
+}
+
+*/
+//rtc
+
+
+
+
+
+
+
 
 
 void ble_advertising_on_ble_evt(ble_evt_t const * p_ble_evt, void * p_context)

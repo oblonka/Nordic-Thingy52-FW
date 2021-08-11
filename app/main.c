@@ -93,10 +93,15 @@
 #include "nrf_fstorage_sd.h"
 #include "nrf_fstorage.h"
 #include "fds_internal_defs.h"
+//rtc start
+#include "rtc_calendar.h"  //2021-8-07 15:41:44
+//#include "app_timer2.h"  //APP_TIMER_INIT 
+//rtc end
 
 #if defined (UART_PRESENT)
 #include "nrf_uart.h"
 #endif
+
 #if defined (UARTE_PRESENT)
 #include "nrf_uarte.h"
 #endif
@@ -254,6 +259,48 @@
 #define BLE_GAP_DATA_LENGTH_DEFAULT     27          //!< The stack's default data length.
 #define BLE_GAP_DATA_LENGTH_MAX         251         //!< Maximum data length.
 
+
+//RTC
+#define IS_SRVC_CHANGED_CHARACT_PRESENT 0                                           /**< Include the service_changed characteristic. If not enabled, the server's database cannot be changed for the lifetime of the device. */
+
+#define CENTRAL_LINK_COUNT              0                                           /**< Number of central links used by the application. When changing this number remember to adjust the RAM settings*/
+#define PERIPHERAL_LINK_COUNT           1                                           /**< Number of peripheral links used by the application. When changing this number remember to adjust the RAM settings*/
+
+#define DEVICE_NAME                     "Nordic_UART"                               /**< Name of device. Will be included in the advertising data. */
+#define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
+
+//#define APP_ADV_INTERVAL                64                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 40 ms). */
+#define APP_ADV_TIMEOUT_IN_SECONDS      0                                         /**< The advertising timeout (in units of seconds). */
+                                           //超时时间会进入休眠,原来是180 ,现在改为0.同时修改为普通,general模式
+#define APP_TIMER_PRESCALER             0                                           /**< Value of the RTC1 PRESCALER register. */
+#define APP_TIMER_OP_QUEUE_SIZE         4                                           /**< Size of timer operation queues. */
+
+//#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(20, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (20 ms), Connection interval uses 1.25 ms units. */
+//#define MAX_CONN_INTERVAL               MSEC_TO_UNITS(75, UNIT_1_25_MS)             /**< Maximum acceptable connection interval (75 ms), Connection interval uses 1.25 ms units. */
+#define SLAVE_LATENCY                   0                                           /**< Slave latency. */
+#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds), Supervision Timeout uses 10 ms units. */
+//#define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(5000, APP_TIMER_PRESCALER)  /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
+//#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000, APP_TIMER_PRESCALER) /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
+#define MAX_CONN_PARAMS_UPDATE_COUNT    3                                           /**< Number of attempts before giving up the connection parameter negotiation. */
+
+#define DEAD_BEEF                       0xDEADBEEF                                  /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
+
+#define UART_TX_BUF_SIZE                256                                         /**< UART TX buffer size. */
+#define UART_RX_BUF_SIZE                256                                         /**< UART RX buffer size. */
+void oled_refresh_fullscreen(void);
+
+static ble_nus_t                        m_nus;                                      /**< Structure to identify the Nordic UART Service. */
+//static uint16_t                         m_conn_handle = BLE_CONN_HANDLE_INVALID;    /**< Handle of the current connection. */
+
+//static ble_uuid_t                       m_adv_uuids[] = {{BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}};  /**< Universally unique service identifier. */
+
+APP_TIMER_DEF(m_second_id);  //秒计时应用定时器 ID
+#define SECOND_INTERVAL      APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) ////秒计时应用定时器间隔 1秒
+
+//RTC
+
+
+
 BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);                                   /**< BLE NUS service instance. */
 BLE_BAS_DEF(m_bas);    
 NRF_BLE_GATT_DEF(m_gatt);                                                           /**< GATT module instance. */
@@ -319,6 +366,12 @@ static void advertising_start(void);
 static void advertising_stop(void);
 static void idle_state_handle(void);
 static void adc_configure(void);
+
+//RTC
+
+
+//RTC
+
 
 /* Dummy data to write to flash. */
 static uint32_t m_data2          = 0xBADC0FFE;
@@ -2022,7 +2075,7 @@ static void advertising_init(void)
     
     init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     init.advdata.include_appearance      = false;
-    init.advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
+    init.advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;//普通模式,退出休眠
     init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
     init.advdata.p_manuf_specific_data = &manuf_data;
@@ -2553,11 +2606,138 @@ static void main_loop(void)
     app_sched_event_put(NULL,NULL,nfc_poll);
 }
 
+//RTC start
+
+/**@brief Function for placing the application in low power state while waiting for events.
+ */
+static void power_manage_rtc(void)
+{
+    uint32_t err_code = sd_app_evt_wait();
+    APP_ERROR_CHECK(err_code);
+}
+
+
+static void second_updata_handler_rtc(void * p_context) //秒计时 应用定时器事件回调函数
+{
+    UNUSED_PARAMETER(p_context);
+    CAL_updata(); //更新tm格式时间变量和时间更新标志
+}
+
+
+static void timers_init_rtc(void)//初始化应用定时器  SDK16差异
+{
+    //uint32_t err_code;
+    ret_code_t err_code;//referece above timer_init
+    // APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);//初始化应用定时器模块
+	  err_code = app_timer_init();
+	
+	  APP_ERROR_CHECK(err_code);
+	
+    err_code = app_timer_create(&m_second_id,
+                                APP_TIMER_MODE_REPEATED,
+                                second_updata_handler_rtc); //创建一个应用定时器，产生秒计时。模式：周期性应用定时器，注册应用定时器
+    APP_ERROR_CHECK(err_code);
+
+}
+
+
+
+
+//从BLE串口接收的同步时间数据中获取时间
+static uint32_t nus_get_parameter_rtc(uint8_t * p,uint8_t len)
+{
+	 uint8_t i;
+	 uint32_t current_value;
+	 if(len > 4) return 0xFFFF;
+	
+	 current_value = 0;
+	 for(i=0;i<len;i++)
+	 {
+			if(p[i] >= '0' && p[i] <= '9')
+      {
+         current_value = current_value * 10 + (p[i] - '0');
+      }
+			else return 0xFFFF;
+				
+	 }
+	 return current_value;
+}
+
+
+static void nus_data_handler_rtc(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
+{
+  	  uint32_t year, month, day, hour, minute, second;
+	  //时间同步数据格式s20210805151645,长度15,以‘s’开头，并且数据长度等于15表示是：时间同步数据
+	  //串口透传的功能仍然可以使用，只有当‘s’开头并且数据长度为15个字节才会被认为是是时间同步数据
+
+	  if((length==15) && (p_data[0] == 's'))
+		{
+			  year = nus_get_parameter_rtc(&p_data[1],4);
+			  month = nus_get_parameter_rtc(&p_data[5],2);
+			  day = nus_get_parameter_rtc(&p_data[7],2);
+			  hour = nus_get_parameter_rtc(&p_data[9],2);
+			  minute = nus_get_parameter_rtc(&p_data[11],2);
+			  second = nus_get_parameter_rtc(&p_data[13],2);
+			  if(year>1970 && year<2100)
+					if(month>0 && month<13)
+						if(day>=1 && day<=31)
+							if(hour<=23)
+								if(minute<=59)
+									if(second<=59)
+									{
+										//更新tm格式的时间变量
+										nrf_cal_set_time(year, month-1, day, hour, minute, second);
+										
+									}
+		}
+		else
+		{
+			for (uint32_t i = 0; i < length; i++)
+      {
+        while (app_uart_put(p_data[i]) != NRF_SUCCESS);
+      }
+      while (app_uart_put('\r') != NRF_SUCCESS);
+		}	 
+}
+
+
+
+
+
+//RTC end
+
+
+
 int main(void)
 {    
+//RTC
+    //uint32_t err_code;
+	  ret_code_t err_code;
+    bool erase_bonds;
+
+    // Initialize.
+	  timers_init_rtc();
+    //APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
+    usr_uart_init();//uart_init();
+	  timers_init();
+    
+    ble_stack_init();
+    gap_params_init();
+    services_init();
+    advertising_init();
+    conn_params_init();
+
+    printf("\r\nUART Start!\r\n");
+		application_timers_start();
+		err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);//ble_advertising_start ago 2021-8-11 23:29:06
+    APP_ERROR_CHECK(err_code);
+//RTC
+	
+
 #ifdef BUTTONLESS_ENABLED
     // Initialize the async SVCI interface to bootloader before any interrupts are enabled.
-    ret_code_t err_code = ble_dfu_buttonless_async_svci_init();
+    //ret_code_t err_code = ble_dfu_buttonless_async_svci_init();  //ago 2021-8-8 23:18:46
+		err_code = ble_dfu_buttonless_async_svci_init();
     APP_ERROR_CHECK(err_code);
 #endif
     // Initialize.
@@ -2593,13 +2773,29 @@ int main(void)
 
     wdt_init();
     // Enter main loop.
+		
+
+
     for (;;)
     {
         main_loop();
-		app_sched_execute();
+		    app_sched_execute();
         idle_state_handle();
+					
+			  //RTC
+			  if(TimeUpdataFlag)//检查ble串口进行时间更新标志
+        {
+					 TimeUpdataFlag = 0;
+					 
+					 #if UART_LOG   //uart也输出时间信息，将宏 UART_LOG  设置为1
+           printf("current time:\t%s\r\n", nrf_cal_get_time_string());
+					 #endif
+        }
+        power_manage_rtc();
+			  //RTC
     }
 }
+
 
 /**
  * @}
