@@ -370,6 +370,14 @@ static void adc_configure(void);
 
 //RTC
 
+void services_init_rtc(void);
+void application_timers_start_rtc(void);
+void power_manage_rtc(void);
+void second_updata_handler_rtc(void * p_context);
+void timers_init_rtc(void);
+uint32_t nus_get_parameter_rtc(uint8_t const * p,uint8_t len);
+//void nus_data_handler_rtc(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length);
+void nus_data_handler_rtc(ble_nus_evt_t * p_evt);
 
 //RTC
 
@@ -1528,7 +1536,7 @@ static void services_init(void)
     // Initialize NUS.
     memset(&nus_init, 0, sizeof(nus_init));
 
-    nus_init.data_handler = nus_data_handler;
+    nus_init.data_handler = nus_data_handler;//rtc  wait
 
     err_code = ble_nus_init(&m_nus, &nus_init);
     APP_ERROR_CHECK(err_code);
@@ -2609,11 +2617,12 @@ static void main_loop(void)
 
 //RTC start
 
+
 /**@snippet [Handling the data received over BLE] */
-
-
 /**@brief Function for initializing services that will be used by the application.
  */
+
+/*  2021-8-12 15:34:45*/
 static void services_init_rtc(void)
 {
     uint32_t       err_code;
@@ -2621,11 +2630,12 @@ static void services_init_rtc(void)
     
     memset(&nus_init, 0, sizeof(nus_init));
 
-    nus_init.data_handler = nus_data_handler;
+    nus_init.data_handler = nus_data_handler_rtc;//结构体一致赋值
     
     err_code = ble_nus_init(&m_nus, &nus_init);
     APP_ERROR_CHECK(err_code);
 }
+
 
 
 //启动秒计时应用定时器。启动后，即开始产生秒计时，也就是提供了一个以秒为单位的计时基准
@@ -2659,7 +2669,7 @@ static void timers_init_rtc(void)//初始化应用定时器  SDK16差异
     //uint32_t err_code;
     ret_code_t err_code;//referece above timer_init
     // APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);//初始化应用定时器模块
-	  err_code = app_timer_init();
+	  err_code = app_timer_init();//later
 	
 	  APP_ERROR_CHECK(err_code);
 	
@@ -2671,10 +2681,8 @@ static void timers_init_rtc(void)//初始化应用定时器  SDK16差异
 }
 
 
-
-
 //从BLE串口接收的同步时间数据中获取时间
-static uint32_t nus_get_parameter_rtc(uint8_t * p,uint8_t len)
+static uint32_t nus_get_parameter_rtc( uint8_t const * p,uint8_t len)
 {
 	 uint8_t i;
 	 uint32_t current_value;
@@ -2694,6 +2702,46 @@ static uint32_t nus_get_parameter_rtc(uint8_t * p,uint8_t len)
 }
 
 
+//ble_nus_evt_t * p_evt    SDK16 master  p_nus  p_data    length
+static void nus_data_handler_rtc(ble_nus_evt_t * p_evt)//结构体里面包含p_nus (A pointer to the instance)
+{
+ uint32_t year, month, day, hour, minute, second;
+ //length   (*p_evt).params.rx_data.length
+ 
+	  if(((*p_evt).params.rx_data.length==15) && ((*p_evt).params.rx_data.p_data[0] == 's'))
+		{
+			  year   = nus_get_parameter_rtc(&((*p_evt).params.rx_data.p_data[1]),4);
+			  month  = nus_get_parameter_rtc(&((*p_evt).params.rx_data.p_data[5]),2);
+			  day    = nus_get_parameter_rtc(&((*p_evt).params.rx_data.p_data[7]),2);
+			  hour   = nus_get_parameter_rtc(&((*p_evt).params.rx_data.p_data[9]),2);
+			  minute = nus_get_parameter_rtc(&((*p_evt).params.rx_data.p_data[11]),2);
+			  second = nus_get_parameter_rtc(&((*p_evt).params.rx_data.p_data[13]),2);
+			  if(year>1970 && year<2100)
+					if(month>0 && month<13)
+						if(day>=1 && day<=31)
+							if(hour<=23)
+								if(minute<=59)
+									if(second<=59)
+									{
+										//更新tm格式的时间变量
+										nrf_cal_set_time(year, month-1, day, hour, minute, second);
+										
+									}
+		}
+		else
+		{
+			for (uint32_t i = 0; i < ((*p_evt).params.rx_data.length); i++)
+      {
+        while (app_uart_put(((*p_evt).params.rx_data.p_data[i])) != NRF_SUCCESS);
+      }
+      while (app_uart_put('\r') != NRF_SUCCESS);
+		}	 	
+	
+}
+
+
+
+/*
 static void nus_data_handler_rtc(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
   	uint32_t year, month, day, hour, minute, second;
@@ -2729,6 +2777,9 @@ static void nus_data_handler_rtc(ble_nus_t * p_nus, uint8_t * p_data, uint16_t l
       while (app_uart_put('\r') != NRF_SUCCESS);
 		}	 
 }
+
+*/
+
 //RTC end
 
 
@@ -2739,19 +2790,18 @@ int main(void)
 //RTC
     //uint32_t err_code;
 	  ret_code_t err_code;
-    bool erase_bonds;
 
     // Initialize.
 	  timers_init_rtc();
     //APP_TIMER_INIT(APP_TIMER_PRESCALER, APP_TIMER_OP_QUEUE_SIZE, false);
     usr_uart_init();//uart_init();
-	  timers_init();
+	  //timers_init();
     
-    ble_stack_init();
-    gap_params_init();
-    services_init_rtc();
-    advertising_init();
-    conn_params_init();
+    ble_stack_init();//
+    gap_params_init();//device  name
+    services_init_rtc();//
+    advertising_init();//s
+    conn_params_init();//s
 
     printf("\r\nUART Start!\r\n");
 		application_timers_start_rtc();//later rtc
