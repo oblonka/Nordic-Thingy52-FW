@@ -1865,7 +1865,7 @@ static void ble_stack_init(void)
 {
     ret_code_t err_code;
 
-    err_code = nrf_sdh_enable_request();
+    err_code = nrf_sdh_enable_request();//Ê±ÖÓ³õÊ¼»¯ÅãÅäÖÃ
     APP_ERROR_CHECK(err_code);
 
     // Configure the BLE stack using the default settings.
@@ -2087,7 +2087,7 @@ static void advertising_init(void)
     init.advdata.flags                   = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;//ÆÕÍ¨Ä£Ê½,ÍË³öĞİÃß
     init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
-    init.advdata.p_manuf_specific_data = &manuf_data;
+    init.advdata.p_manuf_specific_data   = &manuf_data;
 
     init.config.ble_adv_fast_enabled  = true;
     init.config.ble_adv_fast_interval = APP_ADV_INTERVAL;
@@ -2617,36 +2617,31 @@ static void main_loop(void)
 
 //RTC start
 
-
 /**@snippet [Handling the data received over BLE] */
-/**@brief Function for initializing services that will be used by the application.
- */
-
-/*  2021-8-12 15:34:45*/
+/**@brief Function for initializing services that will be used by the application.*/
+/*2021-8-12 15:34:45*/
 static void services_init_rtc(void)
 {
     uint32_t       err_code;
     ble_nus_init_t nus_init;
     
     memset(&nus_init, 0, sizeof(nus_init));
-
-    nus_init.data_handler = nus_data_handler_rtc;//½á¹¹ÌåÒ»ÖÂ¸³Öµ
-    
+    nus_init.data_handler = nus_data_handler_rtc;//rtc ½á¹¹ÌåÒ»ÖÂ¸³Öµ
+  
     err_code = ble_nus_init(&m_nus, &nus_init);
     APP_ERROR_CHECK(err_code);
 }
-
 
 
 //Æô¶¯Ãë¼ÆÊ±Ó¦ÓÃ¶¨Ê±Æ÷¡£Æô¶¯ºó£¬¼´¿ªÊ¼²úÉúÃë¼ÆÊ±£¬Ò²¾ÍÊÇÌá¹©ÁËÒ»¸öÒÔÃëÎªµ¥Î»µÄ¼ÆÊ±»ù×¼
 static void application_timers_start_rtc(void)
 {
     uint32_t err_code;
-
     //Æô¶¯Ãë¼ÆÊ±Ó¦ÓÃ¶¨Ê±Æ÷
     err_code = app_timer_start(m_second_id, SECOND_INTERVAL, NULL);
     APP_ERROR_CHECK(err_code);
 }
+
 
 /**@brief Function for placing the application in low power state while waiting for events.
  */
@@ -2664,7 +2659,7 @@ static void second_updata_handler_rtc(void * p_context) //Ãë¼ÆÊ± Ó¦ÓÃ¶¨Ê±Æ÷ÊÂ¼ş»
 }
 
 
-static void timers_init_rtc(void)//³õÊ¼»¯Ó¦ÓÃ¶¨Ê±Æ÷  SDK16²îÒì
+static void timers_init_rtc(void)//³õÊ¼»¯Ó¦ÓÃ¶¨Ê±Æ÷  SDK16 init²îÒì
 {
     //uint32_t err_code;
     ret_code_t err_code;//referece above timer_init
@@ -2707,7 +2702,9 @@ static void nus_data_handler_rtc(ble_nus_evt_t * p_evt)//½á¹¹ÌåÀïÃæ°üº¬p_nus (A 
 {
  uint32_t year, month, day, hour, minute, second;
  //length   (*p_evt).params.rx_data.length
- 
+ //Ê±¼äÍ¬²½Êı¾İ¸ñÊ½s20210805151645,³¤¶È15,ÒÔ¡®s¡¯¿ªÍ·£¬²¢ÇÒÊı¾İ³¤¶ÈµÈÓÚ15±íÊ¾ÊÇ£ºÊ±¼äÍ¬²½Êı¾İ
+ //´®¿ÚÍ¸´«µÄ¹¦ÄÜÈÔÈ»¿ÉÒÔÊ¹ÓÃ£¬Ö»ÓĞµ±¡®s¡¯¿ªÍ·²¢ÇÒÊı¾İ³¤¶ÈÎª15¸ö×Ö½Ú²Å»á±»ÈÏÎªÊÇÊÇÊ±¼äÍ¬²½Êı¾İ
+
 	  if(((*p_evt).params.rx_data.length==15) && ((*p_evt).params.rx_data.p_data[0] == 's'))
 		{
 			  year   = nus_get_parameter_rtc(&((*p_evt).params.rx_data.p_data[1]),4);
@@ -2739,48 +2736,8 @@ static void nus_data_handler_rtc(ble_nus_evt_t * p_evt)//½á¹¹ÌåÀïÃæ°üº¬p_nus (A 
 	
 }
 
-
-
-/*
-static void nus_data_handler_rtc(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
-{
-  	uint32_t year, month, day, hour, minute, second;
-	  //Ê±¼äÍ¬²½Êı¾İ¸ñÊ½s20210805151645,³¤¶È15,ÒÔ¡®s¡¯¿ªÍ·£¬²¢ÇÒÊı¾İ³¤¶ÈµÈÓÚ15±íÊ¾ÊÇ£ºÊ±¼äÍ¬²½Êı¾İ
-	  //´®¿ÚÍ¸´«µÄ¹¦ÄÜÈÔÈ»¿ÉÒÔÊ¹ÓÃ£¬Ö»ÓĞµ±¡®s¡¯¿ªÍ·²¢ÇÒÊı¾İ³¤¶ÈÎª15¸ö×Ö½Ú²Å»á±»ÈÏÎªÊÇÊÇÊ±¼äÍ¬²½Êı¾İ
-
-	  if((length==15) && (p_data[0] == 's'))
-		{
-			  year = nus_get_parameter_rtc(&p_data[1],4);
-			  month = nus_get_parameter_rtc(&p_data[5],2);
-			  day = nus_get_parameter_rtc(&p_data[7],2);
-			  hour = nus_get_parameter_rtc(&p_data[9],2);
-			  minute = nus_get_parameter_rtc(&p_data[11],2);
-			  second = nus_get_parameter_rtc(&p_data[13],2);
-			  if(year>1970 && year<2100)
-					if(month>0 && month<13)
-						if(day>=1 && day<=31)
-							if(hour<=23)
-								if(minute<=59)
-									if(second<=59)
-									{
-										//¸üĞÂtm¸ñÊ½µÄÊ±¼ä±äÁ¿
-										nrf_cal_set_time(year, month-1, day, hour, minute, second);
-										
-									}
-		}
-		else
-		{
-			for (uint32_t i = 0; i < length; i++)
-      {
-        while (app_uart_put(p_data[i]) != NRF_SUCCESS);
-      }
-      while (app_uart_put('\r') != NRF_SUCCESS);
-		}	 
-}
-
-*/
-
 //RTC end
+
 
 
 
@@ -2797,11 +2754,11 @@ int main(void)
     usr_uart_init();//uart_init();
 	  //timers_init();
     
-    ble_stack_init();//
-    gap_params_init();//device  name
-    services_init_rtc();//
-    advertising_init();//s
-    conn_params_init();//s
+    ble_stack_init();   //lfclk
+    gap_params_init();  //device  name
+    services_init_rtc();
+    advertising_init(); 
+    conn_params_init(); 
 
     printf("\r\nUART Start!\r\n");
 		application_timers_start_rtc();//later rtc
