@@ -7,8 +7,6 @@
  * Licensees are granted free, non-transferable use of the information. NO
  * WARRANTY of ANY KIND is provided. This heading must NOT be removed from
  * the file.
- *
- 
  *2021-8-09 10:24:01
  */
 
@@ -19,7 +17,6 @@
 #include <stdbool.h>
 #include "time.h"
 
-
 typedef struct{
 	unsigned char second;
 	unsigned char minute;
@@ -29,8 +26,7 @@ typedef struct{
 	uint16_t year;
 }data_t;
 
-
-#define UART_LOG   1      //修改为1,激活串口输出,0 2021-8-9 22:59:28
+#define UART_LOG      1   //修改为1,激活串口输出,0 2021-8-9 22:59:28
 
 #define UPDATA_SEC    1   //更新秒
 #define UPDATA_HM     2   //更新时、分
@@ -46,6 +42,6 @@ extern uint8_t TimeUpdataFlag;
 void nrf_cal_init(void);
 char *nrf_cal_get_time_string(void);
 void nrf_cal_set_time(uint32_t year, uint32_t month, uint32_t day, uint32_t hour, uint32_t minute, uint32_t second);
-void CAL_updata(void);
+void CAL_update(void);
 
 #endif

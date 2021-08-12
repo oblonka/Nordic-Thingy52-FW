@@ -7,7 +7,7 @@
  * Licensees are granted free, non-transferable use of the information. NO
  * WARRANTY of ANY KIND is provided. This heading must NOT be removed from
  * the file.
- *
+ *2021-8-12 02:02:00
  */
  
 #include "rtc_calendar.h"
@@ -15,7 +15,6 @@
 
 struct tm t;
 uint8_t TimeUpdataFlag;
-
 
 void nrf_cal_init(void)
 {
@@ -27,9 +26,7 @@ void nrf_cal_init(void)
     NRF_CLOCK->TASKS_LFCLKSTART = 1;
 	  //等待LFCLK启动完成
     while(NRF_CLOCK->EVENTS_LFCLKSTARTED == 0);
-    
-	
-    //配置RTC每秒产生一次比较匹配事件
+    //配置RTC每秒产生一次compare事件
     CAL_RTC->PRESCALER = 4095;
     CAL_RTC->EVTENSET = RTC_EVTENSET_COMPARE0_Msk;
     CAL_RTC->INTENSET = RTC_INTENSET_COMPARE0_Msk;
@@ -43,7 +40,7 @@ void nrf_cal_init(void)
 void nrf_cal_set_time(uint32_t year, uint32_t month, uint32_t day, uint32_t hour, uint32_t minute, uint32_t second)
 {
 
-	t.tm_year = year - 1900;//2021-8-9 14:33:53  1900 这个是时间的计算标准,不能改这个时间基准,从蓝牙端进行起始时间的更改
+	  t.tm_year = year - 1900;//2021-8-9 14:33:53  1900时间的计算标准,时间基准,从蓝牙端进行起始时间的更改
     t.tm_mon = month;
     t.tm_mday = day;
     t.tm_hour = hour;
@@ -74,10 +71,10 @@ static char not_leap(void)
 }
 
 
-void CAL_updata(void)
+void CAL_update(void)//计数
 {
 	TimeUpdataFlag = UPDATA_SEC;
-	if (++t.tm_sec==60)        //keep track of time, date, month, and year
+	if (++t.tm_sec==60) 
 	{
 		TimeUpdataFlag = UPDATA_HM;
 		t.tm_sec=0;
@@ -126,8 +123,3 @@ void CAL_updata(void)
 		}
 	}	
 }
-
-
-
-//2021-8-11 23:45:48
-

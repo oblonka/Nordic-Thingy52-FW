@@ -253,14 +253,6 @@ uint32_t ble_advertising_stop(ble_advertising_t * const p_advertising);
 uint32_t ble_advertising_start(ble_advertising_t * const p_advertising,
                                ble_adv_mode_t            advertising_mode);
 
-
-//rtc
-uint32_t ble_advertising_start_rtc(ble_adv_mode_t advertising_mode);
-
-
-//rtc
-
-
 /**@brief   Function for setting the peer address.
  *
  * @details The peer address must be set by the application upon receiving a

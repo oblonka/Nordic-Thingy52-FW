@@ -127,7 +127,7 @@
 #define BLE_PIN_CANCEL                  7
 #define BLE_RCV_DATA                    8
 
-#define DEFAULT_FLAG					0
+#define DEFAULT_FLAG					        0
 #define SEND_I2C_DATA               	1
 #define READ_I2C_HEAD               	2
 #define READ_I2C_DATA               	3
@@ -141,37 +141,37 @@
 
 #define NO_CHARGE                       0
 #define USB_CHARGE                      1
-#define ERROR_STA						2
+#define ERROR_STA						            2
 
 #define INIT_VALUE                      0
 #define AUTH_VALUE                      1
 
-#define APP_BLE_OBSERVER_PRIO           3                                           /**< Application's BLE observer priority. You shouldn't need to modify this value. */
-#define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
+#define APP_BLE_OBSERVER_PRIO           3                                          /**< Application's BLE observer priority. You shouldn't need to modify this value. */
+#define APP_BLE_CONN_CFG_TAG            1                                          /**< A tag identifying the SoftDevice BLE configuration. */
 
-#define APP_ADV_INTERVAL                40                                          /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
-#define APP_ADV_DURATION                0                                           /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
+#define APP_ADV_INTERVAL                40                                         /**< The advertising interval (in units of 0.625 ms. This value corresponds to 25 ms). */
+#define APP_ADV_DURATION                0                                          /**< The advertising duration (180 seconds) in units of 10 milliseconds. */
 
 #define ADV_ADDL_MANUF_DATA_LEN         6
 #define COMPANY_IDENTIFIER              0xFE
 
 // SCHEDULER CONFIGS
-#define SCHED_MAX_EVENT_DATA_SIZE       64             //!< Maximum size of the scheduler event data.
-#define SCHED_QUEUE_SIZE                20                                          //!< Size of the scheduler queue.
+#define SCHED_MAX_EVENT_DATA_SIZE       64                                         //!< Maximum size of the scheduler event data.
+#define SCHED_QUEUE_SIZE                20                                         //!< Size of the scheduler queue.
 
 #define RCV_DATA_TIMEOUT_INTERVAL       APP_TIMER_TICKS(100)
 #define BATTERY_LEVEL_MEAS_INTERVAL     APP_TIMER_TICKS(1000)                      /**< Battery level measurement interval (ticks). */
 #define BATTERY_MEAS_LONG_INTERVAL      APP_TIMER_TICKS(5000) 
-#define MIN_BATTERY_LEVEL               81                                          /**< Minimum battery level as returned by the simulated measurement function. */
-#define MAX_BATTERY_LEVEL               100                                         /**< Maximum battery level as returned by the simulated measurement function. */
-#define BATTERY_LEVEL_INCREMENT         1                                           /**< Value by which the battery level is incremented/decremented for each call to the simulated measurement function. */
+#define MIN_BATTERY_LEVEL               81                                         /**< Minimum battery level as returned by the simulated measurement function. */
+#define MAX_BATTERY_LEVEL               100                                        /**< Maximum battery level as returned by the simulated measurement function. */
+#define BATTERY_LEVEL_INCREMENT         1                                          /**< Value by which the battery level is incremented/decremented for each call to the simulated measurement function. */
 
-#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(30, UNIT_1_25_MS)             /**< Minimum acceptable connection interval (10 ms). */
+#define MIN_CONN_INTERVAL               MSEC_TO_UNITS(30, UNIT_1_25_MS)            /**< Minimum acceptable connection interval (10 ms). */
 #define MAX_CONN_INTERVAL               MSEC_TO_UNITS(30, UNIT_1_25_MS)            /**< Maximum acceptable connection interval (100 ms) */
-#define SLAVE_LATENCY                   0                                           /**< Slave latency. */
-#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)             /**< Connection supervisory timeout (4 seconds). */
+#define SLAVE_LATENCY                   0                                          /**< Slave latency. */
+#define CONN_SUP_TIMEOUT                MSEC_TO_UNITS(4000, UNIT_10_MS)            /**< Connection supervisory timeout (4 seconds). */
 #define FIRST_CONN_PARAMS_UPDATE_DELAY  APP_TIMER_TICKS(100)                       /**< Time from initiating event (connect or start of notification) to first time sd_ble_gap_conn_param_update is called (5 seconds). */
-#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                      /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
+#define NEXT_CONN_PARAMS_UPDATE_DELAY   APP_TIMER_TICKS(30000)                     /**< Time between each call to sd_ble_gap_conn_param_update after the first call (30 seconds). */
 #define ONE_SECOND_INTERVAL              APP_TIMER_TICKS(1000)
 
 #define RST_ONE_SECNOD_COUNTER()        one_second_counter = 0;
@@ -218,7 +218,7 @@
 #define UART_CMD_BLE_VERSION           0x06
 #define UART_CMD_CTL_BLE               0x07
 #define UART_CMD_RESET_BLE             0x08
-#define UART_CMD_DFU_STA			   0x0a
+#define UART_CMD_DFU_STA			         0x0a
 
 //VALUE
 #define VALUE_CONNECT                  0x01
@@ -227,8 +227,8 @@
 #define VALUE_FAILED                   0x02
 //DFU STATUS
 #define VALUE_PREPARE_DFU			   0x01
-#define VALUE_ENTER_DFU                0x02
-#define VALUE_ENTER_FAILED			   0x03
+#define VALUE_ENTER_DFU          0x02
+#define VALUE_ENTER_FAILED			 0x03
 #define VALUE_RSP_FAILED			   0x04
 #define VALUE_UNKNOWN_ERR			   0x05
 
@@ -245,12 +245,12 @@
 #define NFC_CHANNEL                     0x02
 #define UART_CHANNEL                    0x03
 
-#define UART_DEF						0x00
-#define ACTIVE_SEND_UART				0x01
+#define UART_DEF						      0x00
+#define ACTIVE_SEND_UART				  0x01
 #define RESPONESE_NAME_UART				0x02
 #define RESPONESE_BAT_UART				0x03
 #define RESPONESE_VER_UART				0x04
-#define DEF_RESP						0xFF
+#define DEF_RESP						      0xFF
 
 #define BLE_CTL_ADDR					0x6f000
 #define BAT_LVL_ADDR					0x70000
@@ -295,7 +295,8 @@ static ble_nus_t                        m_nus;                                  
 //static ble_uuid_t                       m_adv_uuids[] = {{BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}};  /**< Universally unique service identifier. */
 
 APP_TIMER_DEF(m_second_id);  //秒计时应用定时器 ID
-#define SECOND_INTERVAL      APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) ////秒计时应用定时器间隔 1秒
+//#define SECOND_INTERVAL      APP_TIMER_TICKS(1000, APP_TIMER_PRESCALER) ////秒计时应用定时器间隔 1秒
+#define SECOND_INTERVAL      APP_TIMER_TICKS(1000) //1000ms later
 
 //RTC
 
@@ -2608,6 +2609,35 @@ static void main_loop(void)
 
 //RTC start
 
+/**@snippet [Handling the data received over BLE] */
+
+
+/**@brief Function for initializing services that will be used by the application.
+ */
+static void services_init_rtc(void)
+{
+    uint32_t       err_code;
+    ble_nus_init_t nus_init;
+    
+    memset(&nus_init, 0, sizeof(nus_init));
+
+    nus_init.data_handler = nus_data_handler;
+    
+    err_code = ble_nus_init(&m_nus, &nus_init);
+    APP_ERROR_CHECK(err_code);
+}
+
+
+//启动秒计时应用定时器。启动后，即开始产生秒计时，也就是提供了一个以秒为单位的计时基准
+static void application_timers_start_rtc(void)
+{
+    uint32_t err_code;
+
+    //启动秒计时应用定时器
+    err_code = app_timer_start(m_second_id, SECOND_INTERVAL, NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
 /**@brief Function for placing the application in low power state while waiting for events.
  */
 static void power_manage_rtc(void)
@@ -2620,7 +2650,7 @@ static void power_manage_rtc(void)
 static void second_updata_handler_rtc(void * p_context) //秒计时 应用定时器事件回调函数
 {
     UNUSED_PARAMETER(p_context);
-    CAL_updata(); //更新tm格式时间变量和时间更新标志
+    CAL_update(); //更新tm格式时间变量和时间更新标志
 }
 
 
@@ -2666,7 +2696,7 @@ static uint32_t nus_get_parameter_rtc(uint8_t * p,uint8_t len)
 
 static void nus_data_handler_rtc(ble_nus_t * p_nus, uint8_t * p_data, uint16_t length)
 {
-  	  uint32_t year, month, day, hour, minute, second;
+  	uint32_t year, month, day, hour, minute, second;
 	  //时间同步数据格式s20210805151645,长度15,以‘s’开头，并且数据长度等于15表示是：时间同步数据
 	  //串口透传的功能仍然可以使用，只有当‘s’开头并且数据长度为15个字节才会被认为是是时间同步数据
 
@@ -2699,12 +2729,8 @@ static void nus_data_handler_rtc(ble_nus_t * p_nus, uint8_t * p_data, uint16_t l
       while (app_uart_put('\r') != NRF_SUCCESS);
 		}	 
 }
-
-
-
-
-
 //RTC end
+
 
 
 
@@ -2723,19 +2749,19 @@ int main(void)
     
     ble_stack_init();
     gap_params_init();
-    services_init();
+    services_init_rtc();
     advertising_init();
     conn_params_init();
 
     printf("\r\nUART Start!\r\n");
-		application_timers_start();
+		application_timers_start_rtc();//later rtc
 		err_code = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);//ble_advertising_start ago 2021-8-11 23:29:06
     APP_ERROR_CHECK(err_code);
 //RTC
 	
-
+	
 #ifdef BUTTONLESS_ENABLED
-    // Initialize the async SVCI interface to bootloader before any interrupts are enabled.
+    //Initialize the async SVCI interface to bootloader before any interrupts are enabled.
     //ret_code_t err_code = ble_dfu_buttonless_async_svci_init();  //ago 2021-8-8 23:18:46
 		err_code = ble_dfu_buttonless_async_svci_init();
     APP_ERROR_CHECK(err_code);
@@ -2774,8 +2800,6 @@ int main(void)
     wdt_init();
     // Enter main loop.
 		
-
-
     for (;;)
     {
         main_loop();
@@ -2787,7 +2811,7 @@ int main(void)
         {
 					 TimeUpdataFlag = 0;
 					 
-					 #if UART_LOG   //uart也输出时间信息，将宏 UART_LOG  设置为1
+					 #if UART_LOG   //uart也输出时间信息，将宏UART_LOG-->1
            printf("current time:\t%s\r\n", nrf_cal_get_time_string());
 					 #endif
         }
@@ -2795,7 +2819,6 @@ int main(void)
 			  //RTC
     }
 }
-
 
 /**
  * @}
